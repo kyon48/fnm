@@ -67,7 +67,7 @@ function printHelp() {
     println "   \033[0;32mdeployCC\033[0m -ccn -ccl -ccv -ccs -ccp -cci -r -d -verbose"
     println
     println " Examples:"
-    println "   network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-javascript/ ./ -ccl javascript"
+    println "   network.sh deployCC -ccn basic -ccp ../asset/chaincode-javascript/ ./ -ccl javascript"
     println "   network.sh deployCC -ccn mychaincode -ccp ./user/mychaincode -ccv 1 -ccl javascript"
   elif [ "$USAGE" == "deployCCAAS" ]; then
     println "Usage: "
@@ -90,8 +90,8 @@ function printHelp() {
     println "   \033[0;32mdeployCC\033[0m -ccn -ccv -ccs -ccp -cci -r -d -verbose"
     println
     println " Examples:"
-    println "   network.sh deployCCAAS  -ccn basicj -ccp ../asset-transfer-basic/chaincode-java"
-    println "   network.sh deployCCAAS  -ccn basict -ccp ../asset-transfer-basic/chaincode-typescript -ccaasdocker false"  
+    println "   network.sh deployCCAAS  -ccn basicj -ccp ../asset/chaincode-java"
+    println "   network.sh deployCCAAS  -ccn basict -ccp ../asset/chaincode-typescript -ccaasdocker false"  
   else
     println "Usage: "
     println "  network.sh <Mode> [Flags]"
@@ -99,7 +99,7 @@ function printHelp() {
     println "      \033[0;32mup\033[0m - Bring up Fabric orderer and peer nodes. No channel is created"
     println "      \033[0;32mup createChannel\033[0m - Bring up fabric network with one channel"
     println "      \033[0;32mcreateChannel\033[0m - Create and join a channel after the network is created"
-    println "      \033[0;32mdeployCC\033[0m - Deploy a chaincode to a channel (defaults to asset-transfer-basic)"
+    println "      \033[0;32mdeployCC\033[0m - Deploy a chaincode to a channel (defaults to asset)"
     println "      \033[0;32mdown\033[0m - Bring down the network"
     println
     println "    Flags:"
@@ -133,7 +133,7 @@ function printHelp() {
     println " Examples:"
     println "   network.sh up createChannel -ca -c mychannel -s couchdb"
     println "   network.sh createChannel -c channelName"
-    println "   network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-javascript/ -ccl javascript"
+    println "   network.sh deployCC -ccn basic -ccp ../asset/chaincode-javascript/ -ccl javascript"
     println "   network.sh deployCC -ccn mychaincode -ccp ./user/mychaincode -ccv 1 -ccl javascript"
   fi
 }
