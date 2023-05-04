@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # imports  
-. scripts/envVar.sh
-. scripts/utils.sh
+. src/asset/scripts/envVar.sh
+. src/asset/scripts/utils.sh
 
 CHANNEL_NAME="$1"
 DELAY="$2"
@@ -71,6 +71,7 @@ joinChannel() {
 
 setAnchorPeer() {
   ORG=$1
+  ${CONTAINER_CLI} exec cli ls
   ${CONTAINER_CLI} exec cli ./scripts/setAnchorPeer.sh $ORG $CHANNEL_NAME 
 }
 
@@ -84,11 +85,13 @@ FABRIC_CFG_PATH=$PWD/../config/
 infoln "${FABRIC_CFG_PATH}"
 BLOCKFILE="./src/asset/channel-artifacts/${CHANNEL_NAME}.block"
 
+infoln "aaaaaaaaaa ${ORDERER_CA}"
 ## Create channel
 infoln "Creating channel ${CHANNEL_NAME}"
 createChannel
 successln "Channel '$CHANNEL_NAME' created"
 
+infoln "bbbbbbbbb ${ORDERER_CA}"
 ## Join all the peers to the channel
 infoln "Joining org1 peer to the channel..."
 joinChannel 1
