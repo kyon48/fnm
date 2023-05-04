@@ -113,7 +113,7 @@ function generateOrg3Definition() {
   infoln "Generating Org3 organization definition"
   export FABRIC_CFG_PATH=$PWD
   set -x
-  configtxgen -printOrg Org3MSP > ../organizations/peerOrganizations/org3.example.com/org3.json
+  configtxgen -printOrg Org3MSP > ../src/asset/organizations/peerOrganizations/org3.example.com/org3.json
   res=$?
   { set +x; } 2>/dev/null
   if [ $res -ne 0 ]; then
@@ -125,7 +125,7 @@ function Org3Up () {
   # start org3 nodes
 
   if [ "$CONTAINER_CLI" == "podman" ]; then
-    cp ../podman/core.yaml ../../organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/
+    cp ../podman/core.yaml ../../src/asset/organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/
   fi
 
   if [ "${DATABASE}" == "couchdb" ]; then
@@ -141,12 +141,12 @@ function Org3Up () {
 # Generate the needed certificates, the genesis block and start the network.
 function addOrg3 () {
   # If the test network is not up, abort
-  if [ ! -d ../organizations/ordererOrganizations ]; then
+  if [ ! -d ../src/asset/organizations/ordererOrganizations ]; then
     fatalln "ERROR: Please, run ./network.sh up createChannel first."
   fi
 
   # generate artifacts if they don't exist
-  if [ ! -d "../organizations/peerOrganizations/org3.example.com" ]; then
+  if [ ! -d "../src/asset/organizations/peerOrganizations/org3.example.com" ]; then
     generateOrg3
     generateOrg3Definition
   fi

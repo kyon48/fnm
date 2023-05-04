@@ -18,7 +18,7 @@ VERBOSE="$4"
 infoln "Using ${CONTAINER_CLI} and ${CONTAINER_CLI_COMPOSE}"
 
 if [ ! -d "channel-artifacts" ]; then
-	mkdir channel-artifacts
+	mkdir src/asset/channel-artifacts
 fi
 
 createChannelGenesisBlock() {
@@ -27,21 +27,20 @@ createChannelGenesisBlock() {
 		fatalln "configtxgen tool not found."
 	fi
 	set -x
-	configtxgen -profile TwoOrgsApplicationGenesis -outputBlock ./channel-artifacts/${CHANNEL_NAME}.block -channelID $CHANNEL_NAME
+	configtxgen -profile TwoOrgsApplicationGenesis -outputBlock ./src/asset/channel-artifacts/${CHANNEL_NAME}.block -channelID $CHANNEL_NAME
 	res=$?
 	{ set +x; } 2>/dev/null
-  verifyResult $res "Failed to generate channel configuration transaction..."
+	verifyResult $res "Failed to generate channel configuration transaction..."
 }
 
 createChannel() {
 	setGlobals 1
-	# Poll in case the raft leader is not set yet
 	local rc=1
 	local COUNTER=1
 	while [ $rc -ne 0 -a $COUNTER -lt $MAX_RETRY ] ; do
 		sleep $DELAY
 		set -x
-		osnadmin channel join --channelID $CHANNEL_NAME --config-block ./channel-artifacts/${CHANNEL_NAME}.block -o localhost:7053 --ca-file "$ORDERER_CA" --client-cert "$ORDERER_ADMIN_TLS_SIGN_CERT" --client-key "$ORDERER_ADMIN_TLS_PRIVATE_KEY" >&log.txt
+		osnadmin channel join --channelID $CHANNEL_NAME --config-block ./src/asset/channel-artifacts/${CHANNEL_NAME}.block -o localhost:7053 --ca-file "$ORDERER_CA" --client-cert "$ORDERER_ADMIN_TLS_SIGN_CERT" --client-key "$ORDERER_ADMIN_TLS_PRIVATE_KEY" >&log.txt
 		res=$?
 		{ set +x; } 2>/dev/null
 		let rc=$res
@@ -51,14 +50,12 @@ createChannel() {
 	verifyResult $res "Channel creation failed"
 }
 
-# joinChannel ORG
 joinChannel() {
   FABRIC_CFG_PATH=$PWD/../config/
   ORG=$1
   setGlobals $ORG
 	local rc=1
 	local COUNTER=1
-	## Sometimes Join takes time, hence retry
 	while [ $rc -ne 0 -a $COUNTER -lt $MAX_RETRY ] ; do
     sleep $DELAY
     set -x
@@ -77,14 +74,15 @@ setAnchorPeer() {
   ${CONTAINER_CLI} exec cli ./scripts/setAnchorPeer.sh $ORG $CHANNEL_NAME 
 }
 
-FABRIC_CFG_PATH=${PWD}/configtx
+FABRIC_CFG_PATH=${PWD}/src/asset/configtx
 
 ## Create channel genesis block
 infoln "Generating channel genesis block '${CHANNEL_NAME}.block'"
 createChannelGenesisBlock
 
 FABRIC_CFG_PATH=$PWD/../config/
-BLOCKFILE="./channel-artifacts/${CHANNEL_NAME}.block"
+infoln "${FABRIC_CFG_PATH}"
+BLOCKFILE="./src/asset/channel-artifacts/${CHANNEL_NAME}.block"
 
 ## Create channel
 infoln "Creating channel ${CHANNEL_NAME}"

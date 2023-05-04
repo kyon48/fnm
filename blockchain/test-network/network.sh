@@ -9,7 +9,7 @@
 # The test network consists of two organizations with one peer each, and a single node Raft ordering service. 
 ROOTDIR=$(cd "$(dirname "$0")" && pwd)
 export PATH=${ROOTDIR}/../bin:${PWD}/../bin:$PATH
-export FABRIC_CFG_PATH=${PWD}/configtx
+export FABRIC_CFG_PATH=${PWD}/src/asset/configtx
 export VERBOSE=false
 
 pushd ${ROOTDIR} > /dev/null
@@ -91,8 +91,8 @@ function checkPrereqs() {
 
 # Create Organization crypto material using cryptogen or CAs
 function createOrgs() {
-  if [ -d "organizations/peerOrganizations" ]; then
-    rm -Rf organizations/peerOrganizations && rm -Rf organizations/ordererOrganizations
+  if [ -d "src/asset/organizations/peerOrganizations" ]; then
+    rm -Rf src/asset/organizations/peerOrganizations && rm -Rf src/asset/organizations/ordererOrganizations
   fi
 
   # Create crypto material using cryptogen
@@ -106,7 +106,7 @@ function createOrgs() {
     infoln "Creating Org1 Identities"
 
     set -x
-    cryptogen generate --config=./organizations/cryptogen/crypto-config-org1.yaml --output="organizations"
+    cryptogen generate --config=./src/asset/organizations/cryptogen/crypto-config-org1.yaml --output="organizations"
     res=$?
     { set +x; } 2>/dev/null
     if [ $res -ne 0 ]; then
@@ -116,7 +116,7 @@ function createOrgs() {
     infoln "Creating Org2 Identities"
 
     set -x
-    cryptogen generate --config=./organizations/cryptogen/crypto-config-org2.yaml --output="organizations"
+    cryptogen generate --config=./src/asset/organizations/cryptogen/crypto-config-org2.yaml --output="organizations"
     res=$?
     { set +x; } 2>/dev/null
     if [ $res -ne 0 ]; then
@@ -126,7 +126,7 @@ function createOrgs() {
     infoln "Creating Orderer Org Identities"
 
     set -x
-    cryptogen generate --config=./organizations/cryptogen/crypto-config-orderer.yaml --output="organizations"
+    cryptogen generate --config=./src/asset/organizations/cryptogen/crypto-config-orderer.yaml --output="organizations"
     res=$?
     { set +x; } 2>/dev/null
     if [ $res -ne 0 ]; then
@@ -138,19 +138,18 @@ function createOrgs() {
   # Create crypto material using Fabric CA
   if [ "$CRYPTO" == "Certificate Authorities" ]; then
     infoln "Generating certificates using Fabric CA"
-    ${CONTAINER_CLI_COMPOSE} -f compose/$COMPOSE_FILE_CA -f compose/$CONTAINER_CLI/${CONTAINER_CLI}-$COMPOSE_FILE_CA up -d 2>&1
+    ${CONTAINER_CLI_COMPOSE} -f src/asset/compose/$COMPOSE_FILE_CA -f src/asset/compose/$CONTAINER_CLI/${CONTAINER_CLI}-$COMPOSE_FILE_CA up -d 2>&1
 
-    . organizations/fabric-ca/registerEnroll.sh
-
+    . src/asset/organizations/fabric-ca/registerEnroll.sh
     while :
     do
-      if [ ! -f "organizations/fabric-ca/org1/tls-cert.pem" ]; then
+      if [ ! -f "src/asset/organizations/fabric-ca/org1/tls-cert.pem" ]; then
         sleep 1
       else
         break
       fi
     done
-
+    
     infoln "Creating Org1 Identities"
 
     createOrg1
@@ -166,21 +165,21 @@ function createOrgs() {
   fi
 
   infoln "Generating CCP files for Org1 and Org2"
-  ./organizations/ccp-generate.sh
+  ./src/asset/organizations/ccp-generate.sh
 }
 
 # Bring up the peer and orderer nodes using docker compose.
 function networkUp() {
   checkPrereqs
 
-  if [ ! -d "organizations/peerOrganizations" ]; then
+  if [ ! -d "src/asset/organizations/peerOrganizations" ]; then
     createOrgs
   fi
 
-  COMPOSE_FILES="-f compose/${COMPOSE_FILE_BASE} -f compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_BASE}"
+  COMPOSE_FILES="-f src/asset/compose/${COMPOSE_FILE_BASE} -f src/asset/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_BASE}"
 
   if [ "${DATABASE}" == "couchdb" ]; then
-    COMPOSE_FILES="${COMPOSE_FILES} -f compose/${COMPOSE_FILE_COUCH} -f compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_COUCH}"
+    COMPOSE_FILES="${COMPOSE_FILES} -f src/asset/compose/${COMPOSE_FILE_COUCH} -f src/asset/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_COUCH}"
   fi
 
   DOCKER_SOCK="${DOCKER_SOCK}" ${CONTAINER_CLI_COMPOSE} ${COMPOSE_FILES} up -d 2>&1
@@ -202,18 +201,17 @@ function createChannel() {
   CONTAINERS=($($CONTAINER_CLI ps | grep hyperledger/ | awk '{print $2}'))
   len=$(echo ${#CONTAINERS[@]})
 
-  if [[ $len -ge 4 ]] && [[ ! -d "organizations/peerOrganizations" ]]; then
+  if [[ $len -ge 4 ]] && [[ ! -d "src/asset/organizations/peerOrganizations" ]]; then
     echo "Bringing network down to sync certs with containers"
     networkDown
   fi
 
-  [[ $len -lt 4 ]] || [[ ! -d "organizations/peerOrganizations" ]] && bringUpNetwork="true" || echo "Network Running Already"
+  [[ $len -lt 4 ]] || [[ ! -d "src/asset/organizations/peerOrganizations" ]] && bringUpNetwork="true" || echo "Network Running Already"
 
   if [ $bringUpNetwork == "true"  ]; then
     infoln "Bringing up network"
     networkUp
   fi
-
   scripts/createChannel.sh $CHANNEL_NAME $CLI_DELAY $MAX_RETRY $VERBOSE
 }
 
@@ -238,14 +236,14 @@ function deployCCAAS() {
 # Tear down running network
 function networkDown() {
 
-  COMPOSE_BASE_FILES="-f compose/${COMPOSE_FILE_BASE} -f compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_BASE}"
-  COMPOSE_COUCH_FILES="-f compose/${COMPOSE_FILE_COUCH} -f compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_COUCH}"
-  COMPOSE_CA_FILES="-f compose/${COMPOSE_FILE_CA} -f compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_CA}"
+  COMPOSE_BASE_FILES="-f src/asset/compose/${COMPOSE_FILE_BASE} -f src/asset/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_BASE}"
+  COMPOSE_COUCH_FILES="-f src/asset/compose/${COMPOSE_FILE_COUCH} -f src/asset/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_COUCH}"
+  COMPOSE_CA_FILES="-f src/asset/compose/${COMPOSE_FILE_CA} -f src/asset/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_CA}"
   COMPOSE_FILES="${COMPOSE_BASE_FILES} ${COMPOSE_COUCH_FILES} ${COMPOSE_CA_FILES}"
 
-  COMPOSE_ORG3_BASE_FILES="-f addOrg3/compose/${COMPOSE_FILE_ORG3_BASE} -f addOrg3/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_ORG3_BASE}"
-  COMPOSE_ORG3_COUCH_FILES="-f addOrg3/compose/${COMPOSE_FILE_ORG3_COUCH} -f addOrg3/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_ORG3_COUCH}"
-  COMPOSE_ORG3_CA_FILES="-f addOrg3/compose/${COMPOSE_FILE_ORG3_CA} -f addOrg3/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_ORG3_CA}"
+  COMPOSE_ORG3_BASE_FILES="-f src/asset/addOrg3/compose/${COMPOSE_FILE_ORG3_BASE} -f src/asset/addOrg3/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_ORG3_BASE}"
+  COMPOSE_ORG3_COUCH_FILES="-f src/asset/addOrg3/compose/${COMPOSE_FILE_ORG3_COUCH} -f src/asset/addOrg3/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_ORG3_COUCH}"
+  COMPOSE_ORG3_CA_FILES="-f src/asset/addOrg3/compose/${COMPOSE_FILE_ORG3_CA} -f src/asset/addOrg3/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_ORG3_CA}"
   COMPOSE_ORG3_FILES="${COMPOSE_ORG3_BASE_FILES} ${COMPOSE_ORG3_COUCH_FILES} ${COMPOSE_ORG3_CA_FILES}"
 
   if [ "${CONTAINER_CLI}" == "docker" ]; then
@@ -261,14 +259,14 @@ function networkDown() {
     clearContainers
     removeUnwantedImages
     ${CONTAINER_CLI} kill $(${CONTAINER_CLI} ps -q --filter name=ccaas) || true
-    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf system-genesis-block/*.block organizations/peerOrganizations organizations/ordererOrganizations'
+    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf system-genesis-block/*.block src/asset/organizations/peerOrganizations src/asset/organizations/ordererOrganizations'
 
-    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf organizations/fabric-ca/org1/msp organizations/fabric-ca/org1/tls-cert.pem organizations/fabric-ca/org1/ca-cert.pem organizations/fabric-ca/org1/IssuerPublicKey organizations/fabric-ca/org1/IssuerRevocationPublicKey organizations/fabric-ca/org1/fabric-ca-server.db'
-    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf organizations/fabric-ca/org2/msp organizations/fabric-ca/org2/tls-cert.pem organizations/fabric-ca/org2/ca-cert.pem organizations/fabric-ca/org2/IssuerPublicKey organizations/fabric-ca/org2/IssuerRevocationPublicKey organizations/fabric-ca/org2/fabric-ca-server.db'
-    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf organizations/fabric-ca/ordererOrg/msp organizations/fabric-ca/ordererOrg/tls-cert.pem organizations/fabric-ca/ordererOrg/ca-cert.pem organizations/fabric-ca/ordererOrg/IssuerPublicKey organizations/fabric-ca/ordererOrg/IssuerRevocationPublicKey organizations/fabric-ca/ordererOrg/fabric-ca-server.db'
-    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf addOrg3/fabric-ca/org3/msp addOrg3/fabric-ca/org3/tls-cert.pem addOrg3/fabric-ca/org3/ca-cert.pem addOrg3/fabric-ca/org3/IssuerPublicKey addOrg3/fabric-ca/org3/IssuerRevocationPublicKey addOrg3/fabric-ca/org3/fabric-ca-server.db'
+    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf src/asset/organizations/fabric-ca/org1/msp src/asset/organizations/fabric-ca/org1/tls-cert.pem src/asset/organizations/fabric-ca/org1/ca-cert.pem src/asset/organizations/fabric-ca/org1/IssuerPublicKey src/asset/organizations/fabric-ca/org1/IssuerRevocationPublicKey src/asset/organizations/fabric-ca/org1/fabric-ca-server.db'
+    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf src/asset/organizations/fabric-ca/org2/msp src/asset/organizations/fabric-ca/org2/tls-cert.pem src/asset/organizations/fabric-ca/org2/ca-cert.pem src/asset/organizations/fabric-ca/org2/IssuerPublicKey src/asset/organizations/fabric-ca/org2/IssuerRevocationPublicKey src/asset/organizations/fabric-ca/org2/fabric-ca-server.db'
+    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf src/asset/organizations/fabric-ca/ordererOrg/msp src/asset/organizations/fabric-ca/ordererOrg/tls-cert.pem src/asset/organizations/fabric-ca/ordererOrg/ca-cert.pem src/asset/organizations/fabric-ca/ordererOrg/IssuerPublicKey src/asset/organizations/fabric-ca/ordererOrg/IssuerRevocationPublicKey src/asset/organizations/fabric-ca/ordererOrg/fabric-ca-server.db'
+    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf src/asset/addOrg3/fabric-ca/org3/msp src/asset/addOrg3/fabric-ca/org3/tls-cert.pem src/asset/addOrg3/fabric-ca/org3/ca-cert.pem src/asset/addOrg3/fabric-ca/org3/IssuerPublicKey src/asset/addOrg3/fabric-ca/org3/IssuerRevocationPublicKey src/asset/addOrg3/fabric-ca/org3/fabric-ca-server.db'
 
-    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf channel-artifacts log.txt *.tar.gz'
+    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf src/asset/channel-artifacts log.txt *.tar.gz'
   fi
 }
 
@@ -392,7 +390,7 @@ while [[ $# -ge 1 ]] ; do
 done
 
 # Are we generating crypto material with this command?
-if [ ! -d "organizations/peerOrganizations" ]; then
+if [ ! -d "src/asset/organizations/peerOrganizations" ]; then
   CRYPTO_MODE="with crypto from '${CRYPTO}'"
 else
   CRYPTO_MODE=""

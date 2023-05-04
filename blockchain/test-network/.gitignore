@@ -1,8 +1,8 @@
-/channel-artifacts/*.tx
-/channel-artifacts/*.block
+src/asset/channel-artifacts/*.tx
+src/asset/channel-artifacts/*.block
 /ledgers
 /ledgers-backup
-/channel-artifacts/*.json
+src/asset/channel-artifacts/*.json
 /org3-artifacts/crypto-config/*
 organizations/fabric-ca/ordererOrg/*
 organizations/fabric-ca/org1/*
