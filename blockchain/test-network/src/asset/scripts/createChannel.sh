@@ -85,13 +85,11 @@ FABRIC_CFG_PATH=$PWD/../config/
 infoln "${FABRIC_CFG_PATH}"
 BLOCKFILE="./src/asset/channel-artifacts/${CHANNEL_NAME}.block"
 
-infoln "aaaaaaaaaa ${ORDERER_CA}"
 ## Create channel
 infoln "Creating channel ${CHANNEL_NAME}"
 createChannel
 successln "Channel '$CHANNEL_NAME' created"
 
-infoln "bbbbbbbbb ${ORDERER_CA}"
 ## Join all the peers to the channel
 infoln "Joining org1 peer to the channel..."
 joinChannel 1
