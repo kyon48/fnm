@@ -3,7 +3,6 @@ src/asset/channel-artifacts/*.block
 /ledgers
 /ledgers-backup
 src/asset/channel-artifacts/*.json
-/org3-artifacts/crypto-config/*
 src/asset/organizations/fabric-ca/ordererOrg/*
 src/asset/organizations/fabric-ca/org1/*
 src/asset/organizations/fabric-ca/org2/*

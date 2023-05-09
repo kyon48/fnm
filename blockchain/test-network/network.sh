@@ -8,7 +8,7 @@
 # This script brings up a Hyperledger Fabric network for testing smart contracts and applications. 
 # The test network consists of two organizations with one peer each, and a single node Raft ordering service. 
 ROOTDIR=$(cd "$(dirname "$0")" && pwd)
-export PATH=${ROOTDIR}/../bin:${PWD}/../bin:$PATH
+export PATH=${ROOTDIR}/src/asset/bin:${PWD}/src/asset/bin:$PATH
 export FABRIC_CFG_PATH=${PWD}/src/asset/configtx
 export VERBOSE=false
 
@@ -39,7 +39,7 @@ NONWORKING_VERSIONS="^1\.0\. ^1\.1\. ^1\.2\. ^1\.3\. ^1\.4\."
 function checkPrereqs() {
   peer version > /dev/null 2>&1
 
-  if [[ $? -ne 0 || ! -d "../config" ]]; then
+  if [[ $? -ne 0 || ! -d "src/asset/config" ]]; then
     errorln "Peer binary and configuration files not found.."
     errorln
     errorln "Follow the instructions in the Fabric docs to install the Fabric Binaries:"
@@ -241,15 +241,10 @@ function networkDown() {
   COMPOSE_CA_FILES="-f src/asset/compose/${COMPOSE_FILE_CA} -f src/asset/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_CA}"
   COMPOSE_FILES="${COMPOSE_BASE_FILES} ${COMPOSE_COUCH_FILES} ${COMPOSE_CA_FILES}"
 
-  COMPOSE_ORG3_BASE_FILES="-f src/asset/addOrg3/compose/${COMPOSE_FILE_ORG3_BASE} -f src/asset/addOrg3/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_ORG3_BASE}"
-  COMPOSE_ORG3_COUCH_FILES="-f src/asset/addOrg3/compose/${COMPOSE_FILE_ORG3_COUCH} -f src/asset/addOrg3/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_ORG3_COUCH}"
-  COMPOSE_ORG3_CA_FILES="-f src/asset/addOrg3/compose/${COMPOSE_FILE_ORG3_CA} -f src/asset/addOrg3/compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_ORG3_CA}"
-  COMPOSE_ORG3_FILES="${COMPOSE_ORG3_BASE_FILES} ${COMPOSE_ORG3_COUCH_FILES} ${COMPOSE_ORG3_CA_FILES}"
-
   if [ "${CONTAINER_CLI}" == "docker" ]; then
-    DOCKER_SOCK=$DOCKER_SOCK ${CONTAINER_CLI_COMPOSE} ${COMPOSE_FILES} ${COMPOSE_ORG3_FILES} down --volumes --remove-orphans
+    DOCKER_SOCK=$DOCKER_SOCK ${CONTAINER_CLI_COMPOSE} ${COMPOSE_FILES} down --volumes --remove-orphans
   elif [ "${CONTAINER_CLI}" == "podman" ]; then
-    ${CONTAINER_CLI_COMPOSE} ${COMPOSE_FILES} ${COMPOSE_ORG3_FILES} down --volumes
+    ${CONTAINER_CLI_COMPOSE} ${COMPOSE_FILES} down --volumes
   else
     fatalln "Container CLI  ${CONTAINER_CLI} not supported"
   fi
@@ -264,7 +259,6 @@ function networkDown() {
     ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf src/asset/organizations/fabric-ca/org1/msp src/asset/organizations/fabric-ca/org1/tls-cert.pem src/asset/organizations/fabric-ca/org1/ca-cert.pem src/asset/organizations/fabric-ca/org1/IssuerPublicKey src/asset/organizations/fabric-ca/org1/IssuerRevocationPublicKey src/asset/organizations/fabric-ca/org1/fabric-ca-server.db'
     ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf src/asset/organizations/fabric-ca/org2/msp src/asset/organizations/fabric-ca/org2/tls-cert.pem src/asset/organizations/fabric-ca/org2/ca-cert.pem src/asset/organizations/fabric-ca/org2/IssuerPublicKey src/asset/organizations/fabric-ca/org2/IssuerRevocationPublicKey src/asset/organizations/fabric-ca/org2/fabric-ca-server.db'
     ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf src/asset/organizations/fabric-ca/ordererOrg/msp src/asset/organizations/fabric-ca/ordererOrg/tls-cert.pem src/asset/organizations/fabric-ca/ordererOrg/ca-cert.pem src/asset/organizations/fabric-ca/ordererOrg/IssuerPublicKey src/asset/organizations/fabric-ca/ordererOrg/IssuerRevocationPublicKey src/asset/organizations/fabric-ca/ordererOrg/fabric-ca-server.db'
-    ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf src/asset/addOrg3/fabric-ca/org3/msp src/asset/addOrg3/fabric-ca/org3/tls-cert.pem src/asset/addOrg3/fabric-ca/org3/ca-cert.pem src/asset/addOrg3/fabric-ca/org3/IssuerPublicKey src/asset/addOrg3/fabric-ca/org3/IssuerRevocationPublicKey src/asset/addOrg3/fabric-ca/org3/fabric-ca-server.db'
 
     ${CONTAINER_CLI} run --rm -v "$(pwd):/data" busybox sh -c 'cd /data && rm -rf src/asset/channel-artifacts log.txt *.tar.gz'
   fi
@@ -285,9 +279,6 @@ CC_INIT_FCN="NA"
 COMPOSE_FILE_BASE=compose-test-net.yaml
 COMPOSE_FILE_COUCH=compose-couch.yaml
 COMPOSE_FILE_CA=compose-ca.yaml
-COMPOSE_FILE_ORG3_BASE=compose-org3.yaml
-COMPOSE_FILE_ORG3_COUCH=compose-couch-org3.yaml
-COMPOSE_FILE_ORG3_CA=compose-ca-org3.yaml
 # chaincode language defaults to "NA"
 CC_SRC_LANGUAGE="NA"
 CCAAS_DOCKER_RUN=true
