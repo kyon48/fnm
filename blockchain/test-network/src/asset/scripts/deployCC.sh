@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source scripts/utils.sh
+source src/asset/scripts/utils.sh
 
 CHANNEL_NAME=${1:-"mychannel"}
 CC_NAME=${2}
@@ -108,8 +108,8 @@ else
 fi
 
 # import utils
-. scripts/envVar.sh
-. scripts/ccutils.sh
+. src/asset/scripts/envVar.sh
+. src/asset/scripts/ccutils.sh
 
 packageChaincode() {
   set -x

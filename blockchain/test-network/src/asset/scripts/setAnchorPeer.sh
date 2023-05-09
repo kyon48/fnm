@@ -55,6 +55,7 @@ CHANNEL_NAME=$2
 
 setGlobalsCLI $ORG
 
+export ORDERER_CA=/opt/gopath/src/github.com/hyperledger/fabric/peer/organizations/ordererOrganizations/example.com/tlsca/tlsca.example.com-cert.pem
 createAnchorPeerUpdate 
 
 updateAnchorPeer 
