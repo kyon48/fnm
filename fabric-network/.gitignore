@@ -1,3 +1,4 @@
+src/asset/chaincode
 src/asset/channel-artifacts/*.tx
 src/asset/channel-artifacts/*.block
 /ledgers

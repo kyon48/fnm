@@ -3,8 +3,7 @@
 function network_start {
     sudo cp -rf ./chaincode ./fabric-network/src/asset
     sudo bash ./fabric-network/network.sh up createChannel -ca
-    sudo bash ./fabric-network/network.sh up createChannel -ca
-    sudo bash ./fabric-network/network.sh deployCC -ccn basic -ccp src/asset/chaincode -ccl go
+    sudo bash ./fabric-network/network.sh deployCC -ccn basic -ccp ./src/asset/chaincode -ccl go
 }
 
 function network_clear {
